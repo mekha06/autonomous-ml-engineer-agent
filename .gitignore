@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+
+backend/uploads/
+backend/models/
+backend/reports/
+backend/mlruns/
+mlruns/
+
+*.pkl
+*.png
+*.html
+
+# MLflow
+mlruns/
+*.db
+backend/mlflow.db
