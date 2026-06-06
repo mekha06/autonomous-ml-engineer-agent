@@ -8,6 +8,7 @@ from agents.deployment_agent import DeploymentAgent
 from agents.report_agent import ReportAgent
 from agents.feature_importance_agent import FeatureImportanceAgent
 from agents.mlflow_agent import MLflowAgent
+from agents.shap_agent import SHAPAgent
 
 
 class AutoMLPipeline:
@@ -24,6 +25,7 @@ class AutoMLPipeline:
         report_agent = ReportAgent()
         feature_importance_agent = FeatureImportanceAgent()
         mlflow_agent = MLflowAgent()
+        shap_agent = SHAPAgent()
 
         dataset_report = dataset_agent.analyze_dataset(
             file_path=file_path,
@@ -65,6 +67,11 @@ class AutoMLPipeline:
 
         feature_importance_report = feature_importance_agent.extract_importance(
             best_model_pipeline=tuning_result["best_model"]
+        )
+
+        shap_report = shap_agent.explain_model(
+            best_model_pipeline=tuning_result["best_model"],
+            preprocessing_result=preprocessing_result
         )
 
         preprocessing_report = {
@@ -123,6 +130,7 @@ class AutoMLPipeline:
             "tuning_report": tuning_report,
             "deployment_report": deployment_result,
             "feature_importance_report": feature_importance_report,
+            "shap_report": shap_report,
             "report_generation": report_result,
             "mlflow_report": mlflow_report
         }
