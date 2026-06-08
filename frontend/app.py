@@ -1,6 +1,8 @@
-import streamlit as st
-import requests
+import json
+
 import pandas as pd
+import requests
+import streamlit as st
 
 API_URL = "http://127.0.0.1:8000"
 
@@ -118,6 +120,38 @@ if st.button("Run AutoML"):
                 score = evaluation_report.get("best_score", 0)
                 st.metric("Best Score", round(score, 4))
 
+            st.subheader("Dataset Health Check")
+
+            health_col1, health_col2, health_col3 = st.columns(3)
+
+            with health_col1:
+                st.metric(
+                    "Imbalance Status",
+                    dataset_report.get("imbalance_status", "N/A")
+                )
+
+            with health_col2:
+                st.metric(
+                    "Time Series Candidate",
+                    str(dataset_report.get("is_time_series_candidate", False))
+                )
+
+            with health_col3:
+                st.metric(
+                    "ID-like Columns",
+                    len(dataset_report.get("id_like_columns", []))
+                )
+
+            warnings = dataset_report.get("warnings", [])
+
+            if warnings:
+                st.warning("Dataset Health Warnings Detected")
+
+                for warning in warnings:
+                    st.write(f"- {warning}")
+            else:
+                st.success("No major dataset health warnings detected.")
+
             st.divider()
 
             st.subheader("Models Trained")
@@ -180,3 +214,48 @@ if st.button("Run AutoML"):
         else:
             st.error("AutoML Pipeline Failed")
             st.code(response.text)
+
+
+st.divider()
+
+st.subheader("Make Prediction")
+
+st.info("Train a model first using Run AutoML, then use this prediction section.")
+
+st.write("Enter input data as JSON using the same feature names as your dataset.")
+
+sample_json = """
+{
+  "Hours Studied": 7,
+  "Previous Scores": 85,
+  "Extracurricular Activities": "Yes",
+  "Sleep Hours": 7,
+  "Sample Question Papers Practiced": 5
+}
+"""
+
+prediction_input = st.text_area(
+    "Prediction Input JSON",
+    value=sample_json,
+    height=200
+)
+
+if st.button("Predict"):
+    try:
+        input_data = json.loads(prediction_input)
+
+        predict_response = requests.post(
+            f"{API_URL}/predict",
+            json={"data": input_data}
+        )
+
+        if predict_response.status_code == 200:
+            prediction_result = predict_response.json()
+            st.success("Prediction completed successfully!")
+            st.metric("Prediction", prediction_result["prediction"][0])
+        else:
+            st.error("Prediction failed.")
+            st.code(predict_response.text)
+
+    except Exception as e:
+        st.error(f"Invalid input: {e}")
