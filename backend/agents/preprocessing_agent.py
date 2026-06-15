@@ -1,4 +1,5 @@
 import pandas as pd
+
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -23,6 +24,14 @@ class PreprocessingAgent:
         categorical_features = X.select_dtypes(
             include=["object", "category", "bool"]
         ).columns.tolist()
+
+        categorical_options = {}
+
+        for col in categorical_features:
+            categorical_options[col] = [
+                str(value)
+                for value in sorted(X[col].dropna().unique().tolist())
+            ]
 
         numerical_pipeline = Pipeline(steps=[
             ("imputer", SimpleImputer(strategy="median")),
@@ -55,5 +64,6 @@ class PreprocessingAgent:
             "y_test": y_test,
             "preprocessor": preprocessor,
             "numerical_features": numerical_features,
-            "categorical_features": categorical_features
+            "categorical_features": categorical_features,
+            "categorical_options": categorical_options
         }
