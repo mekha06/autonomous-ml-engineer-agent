@@ -9,6 +9,7 @@ from agents.report_agent import ReportAgent
 from agents.feature_importance_agent import FeatureImportanceAgent
 from agents.mlflow_agent import MLflowAgent
 from agents.shap_agent import SHAPAgent
+from agents.recommendation_agent import RecommendationAgent
 
 
 class AutoMLPipeline:
@@ -25,6 +26,7 @@ class AutoMLPipeline:
         report_agent = ReportAgent()
         feature_importance_agent = FeatureImportanceAgent()
         mlflow_agent = MLflowAgent()
+        recommendation_agent = RecommendationAgent()
         shap_agent = SHAPAgent()
 
         dataset_report = dataset_agent.analyze_dataset(
@@ -75,11 +77,12 @@ class AutoMLPipeline:
         )
 
         preprocessing_report = {
-            "numerical_features": preprocessing_result["numerical_features"],
-            "categorical_features": preprocessing_result["categorical_features"],
-            "train_rows": len(preprocessing_result["X_train"]),
-            "test_rows": len(preprocessing_result["X_test"])
-        }
+          "numerical_features": preprocessing_result["numerical_features"],
+          "categorical_features": preprocessing_result["categorical_features"],
+          "categorical_options": preprocessing_result["categorical_options"],
+          "train_rows": len(preprocessing_result["X_train"]),
+          "test_rows": len(preprocessing_result["X_test"])
+}
 
         model_training_report = {
             "models_trained": list(trained_models.keys()),
@@ -119,6 +122,11 @@ class AutoMLPipeline:
             tuning_report=tuning_report,
             deployment_report=deployment_result
         )
+        recommendation_report = recommendation_agent.generate_recommendation(
+            evaluation_report=evaluation_report,
+            tuning_report=tuning_report,
+            dataset_report=dataset_report
+        )
 
         return {
             "status": "success",
@@ -132,5 +140,6 @@ class AutoMLPipeline:
             "feature_importance_report": feature_importance_report,
             "shap_report": shap_report,
             "report_generation": report_result,
-            "mlflow_report": mlflow_report
+            "mlflow_report": mlflow_report,
+            "recommendation_report": recommendation_report
         }
