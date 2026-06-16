@@ -72,16 +72,16 @@ class TuningAgent:
 
         scoring = "r2" if task_type == "regression" else "f1_weighted"
 
-        n_iter = min(5, len(list(param_grid.values())[0]))
+        n_iter = 2
 
         randomized_search = RandomizedSearchCV(
             estimator=best_model_pipeline,
             param_distributions=param_grid,
             n_iter=n_iter,
-            cv=3,
+            cv=2,
             scoring=scoring,
             random_state=42,
-            n_jobs=-1
+            n_jobs=1
         )
 
         randomized_search.fit(
