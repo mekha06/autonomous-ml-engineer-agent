@@ -8,6 +8,8 @@ from sklearn.ensemble import (
     GradientBoostingClassifier
 )
 
+from xgboost import XGBRegressor, XGBClassifier
+
 
 class ModelAgent:
 
@@ -15,16 +17,58 @@ class ModelAgent:
         if task_type == "regression":
             return {
                 "Linear Regression": LinearRegression(),
-                "Decision Tree Regressor": DecisionTreeRegressor(random_state=42),
-                "Random Forest Regressor": RandomForestRegressor(random_state=42),
-                "Gradient Boosting Regressor": GradientBoostingRegressor(random_state=42)
+
+                "Decision Tree Regressor": DecisionTreeRegressor(
+                    random_state=42
+                ),
+
+                "Random Forest Regressor": RandomForestRegressor(
+                    random_state=42,
+                    n_jobs=1
+                ),
+
+                "Gradient Boosting Regressor": GradientBoostingRegressor(
+                    random_state=42
+                ),
+
+                "XGBoost Regressor": XGBRegressor(
+                   random_state=42,
+                   objective="reg:squarederror",
+                   n_estimators=50,
+                   max_depth=2,
+                   learning_rate=0.1,
+                   n_jobs=1,
+                   verbosity=0
+                )
             }
 
         return {
-            "Logistic Regression": LogisticRegression(max_iter=1000),
-            "Decision Tree Classifier": DecisionTreeClassifier(random_state=42),
-            "Random Forest Classifier": RandomForestClassifier(random_state=42),
-            "Gradient Boosting Classifier": GradientBoostingClassifier(random_state=42)
+            "Logistic Regression": LogisticRegression(
+                max_iter=1000
+            ),
+
+            "Decision Tree Classifier": DecisionTreeClassifier(
+                random_state=42
+            ),
+
+            "Random Forest Classifier": RandomForestClassifier(
+                random_state=42,
+                n_jobs=1
+            ),
+
+            "Gradient Boosting Classifier": GradientBoostingClassifier(
+                random_state=42
+            ),
+
+            "XGBoost Classifier": XGBClassifier(
+                random_state=42,
+                eval_metric="logloss",
+                n_estimators=50,
+                max_depth=2,
+                learning_rate=0.1,
+                n_jobs=1,
+                verbosity=0
+            )
         }
 
     def train_models(self, preprocessing_result, task_type):
