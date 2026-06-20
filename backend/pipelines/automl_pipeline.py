@@ -10,6 +10,10 @@ from agents.feature_importance_agent import FeatureImportanceAgent
 from agents.mlflow_agent import MLflowAgent
 from agents.shap_agent import SHAPAgent
 from agents.recommendation_agent import RecommendationAgent
+from agents.confusion_matrix_agent import ConfusionMatrixAgent
+from agents.classification_report_agent import (
+    ClassificationReportAgent
+)
 
 
 class AutoMLPipeline:
@@ -28,6 +32,11 @@ class AutoMLPipeline:
         mlflow_agent = MLflowAgent()
         recommendation_agent = RecommendationAgent()
         shap_agent = SHAPAgent()
+        confusion_matrix_agent = ConfusionMatrixAgent()
+        classification_report_agent = (classification_report_agent ()
+        )
+
+
 
         dataset_report = dataset_agent.analyze_dataset(
             file_path=file_path,
@@ -56,6 +65,21 @@ class AutoMLPipeline:
             task_type=dataset_report["task_type"]
         )
 
+        confusion_matrix_report = (
+            confusion_matrix_agent.generate(
+                evaluation_result["y_test"],
+                evaluation_result["best_predictions"],
+                dataset_report["task_type"]
+            )
+        )
+        classification_report_result = (
+            classification_report_agent.generate(
+            evaluation_result["y_test"],
+            evaluation_result["best_predictions"],
+           dataset_report["task_type"]
+           )
+        )
+
         tuning_result = tuning_agent.tune_best_model(
             best_model_pipeline=evaluation_result["best_model"],
             preprocessing_result=preprocessing_result,
@@ -67,8 +91,10 @@ class AutoMLPipeline:
             best_model_name=evaluation_result["best_model_name"]
         )
 
-        feature_importance_report = feature_importance_agent.extract_importance(
-            best_model_pipeline=tuning_result["best_model"]
+        feature_importance_report = (
+            feature_importance_agent.extract_importance(
+                best_model_pipeline=tuning_result["best_model"]
+            )
         )
 
         shap_report = shap_agent.explain_model(
@@ -77,12 +103,17 @@ class AutoMLPipeline:
         )
 
         preprocessing_report = {
-          "numerical_features": preprocessing_result["numerical_features"],
-          "categorical_features": preprocessing_result["categorical_features"],
-          "categorical_options": preprocessing_result["categorical_options"],
-          "train_rows": len(preprocessing_result["X_train"]),
-          "test_rows": len(preprocessing_result["X_test"])
-}
+            "numerical_features":
+                preprocessing_result["numerical_features"],
+            "categorical_features":
+                preprocessing_result["categorical_features"],
+            "categorical_options":
+                preprocessing_result["categorical_options"],
+            "train_rows":
+                len(preprocessing_result["X_train"]),
+            "test_rows":
+                len(preprocessing_result["X_test"])
+        }
 
         model_training_report = {
             "models_trained": list(trained_models.keys()),
@@ -90,20 +121,28 @@ class AutoMLPipeline:
         }
 
         evaluation_report = {
-            "model_results": evaluation_result["model_results"],
-            "best_model_name": evaluation_result["best_model_name"],
-            "best_score": evaluation_result["best_score"]
+            "model_results":
+                evaluation_result["model_results"],
+            "best_model_name":
+                evaluation_result["best_model_name"],
+            "best_score":
+                evaluation_result["best_score"]
         }
 
         tuning_report = {
-            "tuned": tuning_result["tuned"],
-            "best_params": tuning_result["best_params"],
-            "best_cv_score": tuning_result.get("best_cv_score")
+            "tuned":
+                tuning_result["tuned"],
+            "best_params":
+                tuning_result["best_params"],
+            "best_cv_score":
+                tuning_result.get("best_cv_score")
         }
 
         eda_summary_report = {
-            "outlier_report": eda_report["outlier_report"],
-            "plot_paths": eda_report["plot_paths"]
+            "outlier_report":
+                eda_report["outlier_report"],
+            "plot_paths":
+                eda_report["plot_paths"]
         }
 
         report_result = report_agent.generate_report(
@@ -122,10 +161,13 @@ class AutoMLPipeline:
             tuning_report=tuning_report,
             deployment_report=deployment_result
         )
-        recommendation_report = recommendation_agent.generate_recommendation(
-            evaluation_report=evaluation_report,
-            tuning_report=tuning_report,
-            dataset_report=dataset_report
+
+        recommendation_report = (
+            recommendation_agent.generate_recommendation(
+                evaluation_report=evaluation_report,
+                tuning_report=tuning_report,
+                dataset_report=dataset_report
+            )
         )
 
         return {
@@ -137,9 +179,15 @@ class AutoMLPipeline:
             "evaluation_report": evaluation_report,
             "tuning_report": tuning_report,
             "deployment_report": deployment_result,
-            "feature_importance_report": feature_importance_report,
+            "feature_importance_report":
+                feature_importance_report,
             "shap_report": shap_report,
             "report_generation": report_result,
             "mlflow_report": mlflow_report,
-            "recommendation_report": recommendation_report
+            "recommendation_report":
+                recommendation_report,
+            "confusion_matrix_report":
+                confusion_matrix_report,
+                "classification_report":
+               classification_report_result
         }
