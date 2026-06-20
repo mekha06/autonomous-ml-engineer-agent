@@ -12,18 +12,34 @@ from config import TEST_SIZE, RANDOM_STATE
 
 class PreprocessingAgent:
 
-    def preprocess(self, file_path, target_column):
+    def preprocess(
+        self,
+        file_path,
+        target_column,
+        task_type,
+        excluded_columns=None
+    ):
         df = pd.read_csv(file_path)
 
         df = df.dropna(subset=[target_column])
 
-        X = df.drop(columns=[target_column])
+        excluded_columns = excluded_columns or []
+        feature_columns_to_drop = [
+            col for col in [target_column, *excluded_columns] if col in df.columns
+        ]
+
+        X = df.drop(columns=feature_columns_to_drop)
         y = df[target_column]
         label_encoder = None
 
-        if y.dtype == "object" or y.nunique() <= 20:
-          label_encoder = LabelEncoder()
-          y = label_encoder.fit_transform(y)
+        if X.shape[1] == 0:
+            raise ValueError(
+                "No usable feature columns remain after excluding target and ID-like columns."
+            )
+
+        if task_type == "classification":
+            label_encoder = LabelEncoder()
+            y = label_encoder.fit_transform(y)
 
         numerical_features = X.select_dtypes(
             include=["int64", "float64"]
@@ -58,11 +74,20 @@ class PreprocessingAgent:
             ]
         )
 
+        stratify = None
+
+        if task_type == "classification":
+            class_counts = pd.Series(y).value_counts()
+
+            if class_counts.min() >= 2:
+                stratify = y
+
         X_train, X_test, y_train, y_test = train_test_split(
             X,
             y,
             test_size=TEST_SIZE,
-            random_state=RANDOM_STATE
+            random_state=RANDOM_STATE,
+            stratify=stratify
         )
 
         return {
@@ -74,5 +99,8 @@ class PreprocessingAgent:
             "numerical_features": numerical_features,
             "categorical_features": categorical_features,
             "label_encoder": label_encoder,
-            "categorical_options": categorical_options
+            "categorical_options": categorical_options,
+            "excluded_columns": excluded_columns,
+            "feature_columns": X.columns.tolist(),
+            "stratified_split": stratify is not None
         }
