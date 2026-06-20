@@ -5,6 +5,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder
 
 from config import TEST_SIZE, RANDOM_STATE
 
@@ -14,8 +15,15 @@ class PreprocessingAgent:
     def preprocess(self, file_path, target_column):
         df = pd.read_csv(file_path)
 
+        df = df.dropna(subset=[target_column])
+
         X = df.drop(columns=[target_column])
         y = df[target_column]
+        label_encoder = None
+
+        if y.dtype == "object" or y.nunique() <= 20:
+          label_encoder = LabelEncoder()
+          y = label_encoder.fit_transform(y)
 
         numerical_features = X.select_dtypes(
             include=["int64", "float64"]
@@ -65,5 +73,6 @@ class PreprocessingAgent:
             "preprocessor": preprocessor,
             "numerical_features": numerical_features,
             "categorical_features": categorical_features,
+            "label_encoder": label_encoder,
             "categorical_options": categorical_options
         }
