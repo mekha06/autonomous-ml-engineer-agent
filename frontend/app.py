@@ -4,6 +4,55 @@ import streamlit as st
 
 API_URL = "http://127.0.0.1:8000"
 
+
+def show_graph_route(result):
+    graph_path = result.get("graph_path", [])
+
+    st.subheader("LangGraph Route")
+
+    if graph_path:
+        st.write(" -> ".join(graph_path))
+    else:
+        st.warning(
+            "No graph_path found in the backend response. "
+            "Restart the backend and run AutoML again."
+        )
+
+
+def show_report_download(report_generation, key):
+    report_filename = (
+        report_generation.get("pdf_report_filename")
+        or report_generation.get("report_filename")
+    )
+
+    st.subheader("Report Download")
+
+    if not report_filename:
+        st.warning(
+            "No report filename found in the backend response. "
+            "Run AutoML again after restarting the backend."
+        )
+        return
+
+    report_response = requests.get(
+        f"{API_URL}/download-report/{report_filename}"
+    )
+
+    if report_response.status_code != 200:
+        st.warning("Report was generated, but download failed.")
+        st.code(report_response.text)
+        return
+
+    is_pdf = report_filename.lower().endswith(".pdf")
+
+    st.download_button(
+        label="Download PDF Report" if is_pdf else "Download HTML Report",
+        data=report_response.content,
+        file_name=report_filename,
+        mime="application/pdf" if is_pdf else "text/html",
+        key=key
+    )
+
 st.set_page_config(
     page_title="Autonomous ML Engineer Agent",
     layout="wide"
@@ -28,14 +77,8 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.header("Training Pipeline")
 
-    uploaded_file = st.file_uploader(
-        "Upload CSV Dataset",
-        type=["csv"]
-    )
-
-    target_column = st.text_input(
-        "Enter Target Column"
-    )
+    uploaded_file = st.file_uploader("Upload CSV Dataset", type=["csv"])
+    target_column = st.text_input("Enter Target Column")
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -61,7 +104,6 @@ with tab1:
 
         else:
             with st.spinner("Running AutoML Pipeline..."):
-
                 uploaded_file.seek(0)
 
                 files = {
@@ -72,9 +114,7 @@ with tab1:
                     )
                 }
 
-                data = {
-                    "target_column": target_column
-                }
+                data = {"target_column": target_column}
 
                 response = requests.post(
                     f"{API_URL}/upload",
@@ -98,6 +138,11 @@ with tab1:
         evaluation_report = result.get("evaluation_report", {})
         tuning_report = result.get("tuning_report", {})
         model_training_report = result.get("model_training_report", {})
+        preprocessing_report = result.get("preprocessing_report", {})
+        recommendation_report = result.get("recommendation_report", {})
+        report_generation = result.get("report_generation", {})
+        time_series_report = result.get("time_series_report", {})
+        graph_path = result.get("graph_path", [])
 
         target_name = dataset_report.get("target_column", "Prediction")
 
@@ -124,6 +169,28 @@ with tab1:
         with row2_col2:
             score = evaluation_report.get("best_score", 0)
             st.metric("Best Score", round(score, 4))
+
+        show_graph_route(result)
+        show_report_download(report_generation, key="training_report_download")
+
+        model_results = evaluation_report.get("model_results", {})
+
+        if model_results:
+            st.subheader("Model Leaderboard")
+            leaderboard_df = pd.DataFrame(model_results).T
+            st.dataframe(leaderboard_df, use_container_width=True)
+
+        st.subheader("Model Recommendation")
+
+        recommended_model = recommendation_report.get(
+            "recommended_model",
+            evaluation_report.get("best_model_name", "N/A")
+        )
+
+        st.success(f"Recommended Model: {recommended_model}")
+
+        for reason in recommendation_report.get("reasons", []):
+            st.write(f"- {reason}")
 
         st.subheader("Dataset Health Check")
 
@@ -156,11 +223,43 @@ with tab1:
         else:
             st.success("No major dataset health warnings detected.")
 
+        if time_series_report:
+            st.subheader("Time Series Check")
+            st.info(time_series_report.get("message", "No time-series route used."))
+            datetime_columns = time_series_report.get(
+                "datetime_like_columns",
+                []
+            )
+
+            if datetime_columns:
+                st.write("Datetime-like columns:", datetime_columns)
+
+        excluded_columns = preprocessing_report.get("excluded_columns", [])
+
+        if excluded_columns:
+            st.subheader("Leakage Protection")
+            st.warning(
+                "Excluded ID-like feature columns: "
+                + ", ".join(excluded_columns)
+            )
+
+        if preprocessing_report.get("stratified_split"):
+            st.info("Classification split was stratified.")
+
         st.subheader("Models Trained")
         st.write(model_training_report.get("models_trained", []))
 
         st.subheader("Hyperparameter Tuning")
-        st.write("Tuned:", tuning_report.get("tuned"))
+        if tuning_report.get("tuned"):
+            st.success("Hyperparameter tuning applied.")
+        else:
+            st.info(
+                tuning_report.get(
+                    "message",
+                    "Hyperparameter tuning was skipped."
+                )
+            )
+
         st.json(tuning_report.get("best_params", {}))
 
 
@@ -179,6 +278,7 @@ with tab2:
         )
 
         shap_report = result.get("shap_report", {})
+        classification_report = result.get("classification_report", {})
 
         st.subheader("Feature Importance")
 
@@ -202,7 +302,8 @@ with tab2:
             "target_distribution.png",
             "correlation_matrix.png",
             "feature_importance.png",
-            "shap_summary.png"
+            "shap_summary.png",
+            "confusion_matrix.png"
         ]
 
         for plot_name in plot_names:
@@ -223,6 +324,11 @@ with tab2:
             except Exception:
                 st.warning(f"Could not load {plot_name}.")
 
+        if classification_report.get("available"):
+            st.subheader("Classification Report")
+            report_df = pd.DataFrame(classification_report.get("report", {})).T
+            st.dataframe(report_df, use_container_width=True)
+
 
 with tab3:
     st.header("Prediction")
@@ -240,48 +346,47 @@ with tab3:
 
         st.info(f"Enter feature values to predict: {target_name}")
 
-        numerical_features = preprocessing_report.get(
-            "numerical_features",
-            []
-        )
-
-        categorical_features = preprocessing_report.get(
-            "categorical_features",
-            []
-        )
-
-        categorical_options = preprocessing_report.get(
-            "categorical_options",
-            {}
-        )
+        numerical_features = preprocessing_report.get("numerical_features", [])
+        categorical_features = preprocessing_report.get("categorical_features", [])
+        categorical_options = preprocessing_report.get("categorical_options", {})
 
         prediction_data = {}
 
-        for feature in numerical_features:
-            prediction_data[feature] = st.number_input(
-                label=feature,
-                value=0.0,
-                key=f"num_{feature}"
-            )
-
-        for feature in categorical_features:
-            options = categorical_options.get(feature, [])
-
-            if options:
-                prediction_data[feature] = st.selectbox(
-                    label=feature,
-                    options=options,
-                    key=f"cat_{feature}"
-                )
+        with st.expander("Numerical Features", expanded=True):
+            if numerical_features:
+                for feature in numerical_features:
+                    prediction_data[feature] = st.number_input(
+                        label=feature,
+                        value=0.0,
+                        key=f"num_{feature}"
+                    )
             else:
-                prediction_data[feature] = st.text_input(
-                    label=feature,
-                    value="",
-                    key=f"cat_{feature}"
-                )
+                st.info("No numerical features found.")
+
+        with st.expander("Categorical Features", expanded=True):
+            if categorical_features:
+                for feature in categorical_features:
+                    options = categorical_options.get(feature, [])
+
+                    if options:
+                        prediction_data[feature] = st.selectbox(
+                            label=feature,
+                            options=options,
+                            key=f"cat_{feature}"
+                        )
+                    else:
+                        prediction_data[feature] = st.text_input(
+                            label=feature,
+                            value="",
+                            key=f"cat_{feature}"
+                        )
+            else:
+                st.info("No categorical features found.")
+
+        with st.expander("Prediction Payload"):
+            st.json(prediction_data)
 
         if st.button("Predict", key="predict_button"):
-
             predict_response = requests.post(
                 f"{API_URL}/predict",
                 json={"data": prediction_data}
@@ -291,7 +396,7 @@ with tab3:
                 prediction_result = predict_response.json()
                 predicted_value = prediction_result["prediction"][0]
 
-                st.success("Prediction completed successfully!")
+                st.success("Prediction completed successfully.")
 
                 st.metric(
                     label=f"Predicted {target_name}",
@@ -315,6 +420,7 @@ with tab4:
         mlflow_report = result.get("mlflow_report", {})
         deployment_report = result.get("deployment_report", {})
         report_generation = result.get("report_generation", {})
+        show_graph_route(result)
 
         st.subheader("MLflow Tracking")
         st.json(mlflow_report)
@@ -325,22 +431,7 @@ with tab4:
         st.subheader("Report Generation")
         st.json(report_generation)
 
-        report_filename = report_generation.get("report_filename")
-
-        if report_filename:
-            report_response = requests.get(
-                f"{API_URL}/download-report/{report_filename}"
-            )
-
-            if report_response.status_code == 200:
-                st.download_button(
-                    label="Download HTML Report",
-                    data=report_response.content,
-                    file_name=report_filename,
-                    mime="text/html"
-                )
-            else:
-                st.warning("Report was generated, but download failed.")
+        show_report_download(report_generation, key="experiments_report_download")
 
         with st.expander("View Full Raw Response"):
             st.json(result)
