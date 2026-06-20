@@ -45,9 +45,9 @@ class TuningAgent:
 
         elif isinstance(model, LogisticRegression):
             return {
-                "model__C": [0.01, 0.1, 1, 10],
-                "model__solver": ["lbfgs", "liblinear"]
-            }
+          "model__C": [0.01, 0.1, 1, 10],
+          "model__solver": ["lbfgs"]
+                    }
 
         return None
 
