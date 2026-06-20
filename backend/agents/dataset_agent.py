@@ -1,14 +1,45 @@
 import pandas as pd
 
+
 class DatasetAgent:
 
     def analyze_dataset(self, file_path, target_column):
-        df = pd.read_csv(file_path)
+        try:
+            df = pd.read_csv(file_path)
+        except UnicodeDecodeError as exc:
+            raise ValueError(
+                "Could not read CSV file. Please upload a UTF-8 encoded CSV."
+            ) from exc
+        except pd.errors.EmptyDataError as exc:
+            raise ValueError("Uploaded CSV file is empty.") from exc
+
+        if df.empty:
+            raise ValueError("Uploaded CSV file has no rows.")
+
+        if len(df.columns) == 0:
+            raise ValueError("Uploaded CSV file has no columns.")
+
+        duplicate_columns = df.columns[df.columns.duplicated()].tolist()
+
+        if duplicate_columns:
+            raise ValueError(
+                f"Duplicate column names found: {duplicate_columns}."
+            )
 
         if target_column not in df.columns:
             raise ValueError(f"Target column '{target_column}' not found.")
 
         num_rows, num_columns = df.shape
+
+        if num_rows < 10:
+            raise ValueError(
+                "Dataset must contain at least 10 rows for a reliable split."
+            )
+
+        if num_columns < 2:
+            raise ValueError(
+                "Dataset must contain at least one feature column and one target column."
+            )
 
         missing_values = {
             col: int(value)
@@ -27,14 +58,26 @@ class DatasetAgent:
 
         target_series = df[target_column]
         missing_target_rows = int(target_series.isna().sum())
-        unique_target_values = int(target_series.nunique())
+        usable_target_series = target_series.dropna()
+        unique_target_values = int(usable_target_series.nunique())
         target_dtype = str(target_series.dtype)
 
         warnings = []
         if missing_target_rows > 0:
-          warnings.append(
-        f"{missing_target_rows} rows have missing target values and will be removed before training."
-    )
+            warnings.append(
+                f"{missing_target_rows} rows have missing target values and "
+                "will be removed before training."
+            )
+
+        if len(usable_target_series) < 10:
+            raise ValueError(
+                "Dataset must contain at least 10 rows with a non-missing target."
+            )
+
+        if unique_target_values < 2:
+            raise ValueError(
+                f"Target column '{target_column}' must have at least two unique values."
+            )
 
         # ID-like column detection
         id_like_columns = []
@@ -62,17 +105,42 @@ class DatasetAgent:
                 "This may not be a good classification target."
             )
 
-        if unique_target_values == num_rows:
+        if unique_target_values == len(usable_target_series):
             warnings.append(
                 f"Target column '{target_column}' has unique values for every row. "
                 "This may indicate an identifier or leakage-prone target."
             )
 
         # Task type detection
-        if target_dtype == "object" or unique_target_values <= 20:
+        is_categorical_target = (
+            target_dtype in {"object", "category", "bool"}
+            or unique_target_values <= 10
+            or (
+                unique_target_values <= 20
+                and unique_target_values / len(usable_target_series) <= 0.05
+            )
+        )
+
+        if is_categorical_target:
             task_type = "classification"
         else:
             task_type = "regression"
+
+        if target_dtype != "object" and task_type == "classification":
+            warnings.append(
+                "Numeric target treated as classification because it has a "
+                "small number of distinct values."
+            )
+
+        excluded_feature_columns = [
+            col for col in id_like_columns if col != target_column
+        ]
+
+        if excluded_feature_columns:
+            warnings.append(
+                "ID-like feature columns will be excluded from training to "
+                "reduce leakage risk."
+            )
 
         # Class imbalance check
         class_distribution = None
@@ -160,6 +228,7 @@ class DatasetAgent:
             "class_distribution": class_distribution,
             "imbalance_status": imbalance_status,
             "id_like_columns": id_like_columns,
+            "excluded_feature_columns": excluded_feature_columns,
             "high_cardinality_features": high_cardinality_features,
             "datetime_like_columns": datetime_like_columns,
             "is_time_series_candidate": is_time_series_candidate,
