@@ -1,10 +1,11 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import FileResponse
 import shutil
 import os
 import pandas as pd
 import joblib
 
-from config import UPLOAD_DIR, MODEL_DIR
+from config import UPLOAD_DIR, MODEL_DIR, REPORT_DIR
 from pipelines.automl_pipeline import AutoMLPipeline
 from schemas.prediction_schema import PredictionRequest
 
@@ -42,7 +43,6 @@ async def upload_dataset(
 
 @app.post("/predict")
 def predict(request: PredictionRequest):
-
     try:
         model_path = os.path.join(MODEL_DIR, "best_model.pkl")
 
@@ -61,6 +61,43 @@ def predict(request: PredictionRequest):
         return {
             "prediction": prediction.tolist()
         }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/plot/{plot_name}")
+def get_plot(plot_name: str):
+    try:
+        plot_path = os.path.join(REPORT_DIR, "plots", plot_name)
+
+        if not os.path.exists(plot_path):
+            raise HTTPException(
+                status_code=404,
+                detail="Plot not found."
+            )
+
+        return FileResponse(plot_path)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/download-report/{report_filename}")
+def download_report(report_filename: str):
+    try:
+        report_path = os.path.join(REPORT_DIR, report_filename)
+
+        if not os.path.exists(report_path):
+            raise HTTPException(
+                status_code=404,
+                detail="Report not found."
+            )
+
+        return FileResponse(
+            path=report_path,
+            filename=report_filename,
+            media_type="text/html"
+        )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
