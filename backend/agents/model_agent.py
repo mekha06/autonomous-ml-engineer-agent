@@ -44,7 +44,8 @@ class ModelAgent:
 
         return {
             "Logistic Regression": LogisticRegression(
-                max_iter=1000
+                max_iter=1000,
+                solver="lbfgs"
             ),
 
             "Decision Tree Classifier": DecisionTreeClassifier(
