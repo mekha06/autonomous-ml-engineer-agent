@@ -26,10 +26,15 @@ class DatasetAgent:
         ).columns.tolist()
 
         target_series = df[target_column]
+        missing_target_rows = int(target_series.isna().sum())
         unique_target_values = int(target_series.nunique())
         target_dtype = str(target_series.dtype)
 
         warnings = []
+        if missing_target_rows > 0:
+          warnings.append(
+        f"{missing_target_rows} rows have missing target values and will be removed before training."
+    )
 
         # ID-like column detection
         id_like_columns = []
@@ -158,6 +163,7 @@ class DatasetAgent:
             "high_cardinality_features": high_cardinality_features,
             "datetime_like_columns": datetime_like_columns,
             "is_time_series_candidate": is_time_series_candidate,
+            "missing_target_rows": missing_target_rows,
             "warnings": warnings
         }
 
