@@ -219,7 +219,6 @@ class ReportAgent:
             f"Type: {feature_importance_report['importance_type']}",
             f"Top Features: {feature_importance_report['top_features']}"
         ]
-
         wrapped_lines = []
 
         for line in lines:
