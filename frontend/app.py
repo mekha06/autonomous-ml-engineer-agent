@@ -142,7 +142,6 @@ with tab1:
         recommendation_report = result.get("recommendation_report", {})
         report_generation = result.get("report_generation", {})
         time_series_report = result.get("time_series_report", {})
-        graph_path = result.get("graph_path", [])
 
         target_name = dataset_report.get("target_column", "Prediction")
 
