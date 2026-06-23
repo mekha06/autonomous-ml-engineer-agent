@@ -1,47 +1,162 @@
-# ML Engineer Agent
+# Autonomous ML Engineer Agent
 
-ML Engineer Agent is a multi-agent AutoML platform that automates the machine learning workflow from dataset upload to model deployment.
+An agentic AI system that automates the complete machine learning workflow using **LangGraph** and multiple specialized agents.
 
-Simply upload a CSV file and specify the target column. The system automatically analyzes the dataset, performs preprocessing, trains multiple machine learning models, evaluates their performance, selects the best model, generates reports, and exposes a prediction API.
+The project accepts a dataset and task description, analyzes the data, preprocesses it, trains multiple machine learning models, evaluates their performance, explains predictions, generates reports, and logs experiments automatically.
 
-## Features
+---
 
-* Automated dataset analysis
-* Classification and regression task detection
-* Missing value and duplicate detection
-* Automated EDA and visualization generation
-* Data preprocessing pipeline
-* Training of multiple ML models
-* Automatic best model selection
-* Feature importance analysis
-* Model persistence using Joblib
-* FastAPI prediction endpoint
-* HTML report generation
+# Features
 
-## Workflow
-
-Dataset Upload → Data Analysis → EDA → Preprocessing → Model Training → Evaluation → Best Model Selection → Report Generation → Prediction API
-
-## Tech Stack
-
-**Backend:** Python, FastAPI
-
-**Machine Learning:** Scikit-learn, Pandas, NumPy
-
-**Visualization:** Matplotlib
-
-**Models:** Linear Regression, Logistic Regression, Decision Tree, Random Forest, Gradient Boosting
-
-## Why I Built This
-
-While learning Machine Learning, I noticed that a lot of time is spent on repetitive tasks like data analysis, preprocessing, model training, and evaluation. I wanted to explore how an agent-based system could automate these steps and make experimentation faster.
-
-## Future Plans
-
-* XGBoost Integration
-* Hyperparameter Tuning with Optuna
+* Dataset Analysis
+* Exploratory Data Analysis (EDA)
+* Data Preprocessing
+* Automatic Task Detection
+* Multi-model Training
+* Hyperparameter Tuning
+* Model Evaluation
 * SHAP Explainability
-* MLflow Tracking
-* Docker Deployment
-* LangGraph Workflow Orchestration
-* Streamlit / React Dashboard
+* Automated Report Generation
+* MLflow Experiment Tracking
+* LangGraph Agent Orchestration
+* Dockerized Deployment
+
+---
+
+# Tech Stack
+
+* Python
+* FastAPI
+* Streamlit
+* LangGraph
+* Scikit-learn
+* XGBoost
+* SHAP
+* MLflow
+* Docker
+* Docker Compose
+
+---
+
+# Project Structure
+
+```text
+backend/
+    agents/
+    reports/
+    models/
+    uploads/
+    main.py
+
+frontend/
+    app.py
+
+docker-compose.yml
+README.md
+```
+
+---
+
+# Getting Started
+
+Clone the repository
+
+```bash
+git clone <repository-url>
+cd autonomous-ml-engineer-agent
+```
+
+Build the Docker containers
+
+```bash
+docker compose build
+```
+
+Start the application
+
+```bash
+docker compose up
+```
+
+Frontend
+
+```
+http://localhost:8501
+```
+
+Backend API
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# Agent Workflow
+
+```text
+Dataset
+    │
+    ▼
+Dataset Agent
+    │
+    ▼
+EDA Agent
+    │
+    ▼
+Preprocessing Agent
+    │
+    ▼
+Model Agent
+    │
+    ▼
+Evaluation Agent
+    │
+    ▼
+SHAP Agent
+    │
+    ▼
+Report Agent
+    │
+    ▼
+MLflow Agent
+```
+
+---
+
+# What I Learned
+
+This project became my introduction to building production-style AI systems beyond traditional machine learning.
+
+Through this project I learned:
+
+* Agent orchestration using LangGraph
+* Designing multi-agent workflows
+* Building REST APIs with FastAPI
+* Creating interactive interfaces using Streamlit
+* Containerizing applications using Docker
+* Managing multi-container applications with Docker Compose
+* Environment configuration using environment variables
+* Experiment tracking using MLflow
+* Model explainability using SHAP
+* Structuring scalable ML projects
+
+---
+
+# Future Improvements
+
+* Persistent Agent Memory
+* Reflection Agent
+* Dynamic Graph Routing
+* CI/CD using GitHub Actions
+* Cloud Deployment
+* Monitoring and Logging
+* Production Health Checks
+
+---
+
+# Author
+
+**Mekha S R**
+**AI and ML**
+**SCTCE**
