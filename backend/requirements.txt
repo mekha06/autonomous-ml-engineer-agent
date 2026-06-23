@@ -10,3 +10,4 @@ seaborn
 mlflow
 shap
 langgraph
+xgboost
