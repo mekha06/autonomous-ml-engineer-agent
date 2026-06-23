@@ -183,8 +183,6 @@ def download_report(report_filename: str):
         raise HTTPException(status_code=500, detail=str(e))
 from fastapi import FastAPI
 
-app = FastAPI()
-
 @app.get("/health")
 def health():
     return {
