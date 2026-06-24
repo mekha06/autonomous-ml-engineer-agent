@@ -3,7 +3,10 @@ import requests
 import streamlit as st
 import os
 
-API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
+API_URL = os.getenv(
+    "API_URL",
+    "http://127.0.0.1:8000"
+).rstrip("/")
 
 def show_graph_route(result):
     graph_path = result.get("graph_path", [])
