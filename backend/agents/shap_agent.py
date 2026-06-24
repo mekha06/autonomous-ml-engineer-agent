@@ -18,23 +18,45 @@ class SHAPAgent:
 
             feature_names = preprocessor.get_feature_names_out()
 
-            explainer = shap.Explainer(model, X_test_transformed)
-            shap_values = explainer(X_test_transformed[:100])
+            sample_size = min(100, len(X_test_transformed))
+
+            try:
+                explainer = shap.Explainer(model)
+
+                shap_values = explainer(
+                    X_test_transformed[:sample_size],
+                    check_additivity=False
+                )
+
+            except Exception:
+                return {
+                    "available": False,
+                    "message": "SHAP explanation could not be generated for the selected model.",
+                    "plot_path": None
+                }
 
             plots_dir = os.path.join(REPORT_DIR, "plots")
             os.makedirs(plots_dir, exist_ok=True)
 
-            shap_plot_path = os.path.join(plots_dir, "shap_summary.png")
+            shap_plot_path = os.path.join(
+                plots_dir,
+                "shap_summary.png"
+            )
 
             plt.figure()
+
             shap.summary_plot(
                 shap_values,
-                X_test_transformed[:100],
+                X_test_transformed[:sample_size],
                 feature_names=feature_names,
                 show=False
             )
+
             plt.tight_layout()
-            plt.savefig(shap_plot_path, bbox_inches="tight")
+            plt.savefig(
+                shap_plot_path,
+                bbox_inches="tight"
+            )
             plt.close()
 
             return {
