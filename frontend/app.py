@@ -11,16 +11,43 @@ API_URL = os.getenv(
 def show_graph_route(result):
     graph_path = result.get("graph_path", [])
 
-    st.subheader("LangGraph Route")
+    agent_names = {
+        "dataset_analysis": "Dataset Agent",
+        "time_series_agent": "Time Series Agent",
+        "eda_agent": "EDA Agent",
+        "preprocessing_agent": "Preprocessing Agent",
+        "model_selection": "Model Selection Agent",
+        "classification_agent": "Model Training Agent",
+        "regression_agent": "Model Training Agent",
+        "evaluation_agent": "Evaluation Agent",
+        "quality_gate": "Quality Gate Agent",
+        "hyperparameter_tuning": "Hyperparameter Tuning Agent",
+        "shap_agent": "SHAP Agent",
+        "recommendation_agent": "Recommendation Agent",
+        "deploy_agent": "Deployment Agent",
+        "report_agent": "Report Agent",
+        "mlflow_agent": "MLflow Agent"
+    }
+
+    st.subheader("Agent Execution Flow")
 
     if graph_path:
-        st.write(" -> ".join(graph_path))
+
+        progress = len(graph_path)
+        total_steps = 11
+
+        st.progress(min(progress / total_steps, 1.0))
+
+        for step in graph_path:
+            st.success(
+                f" {agent_names.get(step, step)} Completed✨"
+            )
+
     else:
         st.warning(
-            "No graph_path found in the backend response. "
-            "Restart the backend and run AutoML again."
+            "No agent execution path found. "
+            "Run AutoML again."
         )
-
 
 def show_report_download(report_generation, key):
     report_filename = (
