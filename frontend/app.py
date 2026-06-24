@@ -40,7 +40,7 @@ def show_graph_route(result):
 
         for step in graph_path:
             st.success(
-                f" {agent_names.get(step, step)} Completed✨"
+                f" {agent_names.get(step, step)} Completed"
             )
 
     else:
