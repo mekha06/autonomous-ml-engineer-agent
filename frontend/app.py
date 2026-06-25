@@ -8,19 +8,6 @@ API_URL = os.getenv(
     "http://127.0.0.1:8000"
 ).rstrip("/")
 
-def show_graph_route(result):
-    graph_path = result.get("graph_path", [])
-
-    st.subheader("LangGraph Route")
-
-    if graph_path:
-        st.write(" -> ".join(graph_path))
-    else:
-        st.warning(
-            "No graph_path found in the backend response. "
-            "Restart the backend and run AutoML again."
-        )
-
 def show_report_download(report_generation, key):
     report_filename = (
         report_generation.get("pdf_report_filename")
@@ -171,7 +158,6 @@ with tab1:
             score = evaluation_report.get("best_score", 0)
             st.metric("Best Score", round(score, 4))
 
-        show_graph_route(result)
         show_report_download(report_generation, key="training_report_download")
 
         model_results = evaluation_report.get("model_results", {})
@@ -421,7 +407,7 @@ with tab4:
         mlflow_report = result.get("mlflow_report", {})
         deployment_report = result.get("deployment_report", {})
         report_generation = result.get("report_generation", {})
-        show_graph_route(result)
+        
 
         st.subheader("MLflow Tracking")
         st.json(mlflow_report)
