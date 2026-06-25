@@ -148,7 +148,6 @@ Through this project I learned:
 * Persistent Agent Memory
 * Reflection Agent
 * Dynamic Graph Routing
-* CI/CD using GitHub Actions
 * Cloud Deployment
 * Monitoring and Logging
 * Production Health Checks
